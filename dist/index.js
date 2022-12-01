@@ -11,8 +11,9 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT;
 app.get("/", (req, res) => {
+    console.log("can you see me?");
     res.send("<p>Welcome to Order Processor!</p>");
 });
 app.listen(port, () => {
-    console.log(`[server]: Server is running at https://localhost:${port}`);
+    console.log(`[server]: Server is running at http://localhost:${port}`);
 });
