@@ -1,15 +1,19 @@
 import express, { Request, Response } from "express";
+import morgan from "morgan";
 import dotenv from "dotenv";
+import { orderRouter } from "./routes/order-route";
 
 // support using environment vars
 dotenv.config();
 
 // initialize express app
 const app = express();
+app.use(morgan("dev"));
+app.use("/order", orderRouter);
+
 const port = process.env.PORT;
 
 app.get("/", (req: Request, res: Response) => {
-  console.log("can you see me?");
   res.send("<p>Welcome to Order Processor!</p>");
 });
 
