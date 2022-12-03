@@ -8,6 +8,7 @@ dotenv.config();
 
 // initialize express app
 const app = express();
+app.use(express.json());
 app.use(morgan("dev"));
 app.use("/order", orderRouter);
 
