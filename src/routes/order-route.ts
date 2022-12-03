@@ -8,9 +8,9 @@ type Order = Static<typeof Order>;
 
 // use this to debug logic before implementing db
 const mock_items = {
-  1: 5,
-  2: 8,
-  3: 2,
+  "1": 5,
+  "2": 8,
+  "3": 2,
 };
 
 /**
@@ -57,11 +57,16 @@ orderRouter.post(
   (req, res, next) => {
     // validate order data matches model (middleware handles that)
     const orderObj: Order = req.body;
-
+    // validate item ids exist (middleware does that)
     // fetch item prices from db by id
+    const itemPrices = orderObj.items.map(
+      (item) =>
+        Object.entries(mock_items).find((x) => x[0] === item.id.toString())![1]
+    );
+
     // calc subtotal
     // add tax to calc total
     // return subtotal and total
-    res.status(200).send("got your order :) ");
+    res.status(200).send(`your item prices are: ${itemPrices}`);
   }
 );
