@@ -1,8 +1,10 @@
 import { Router, RequestHandler } from "express";
-import { ValidationError } from "runtypes";
+import { ValidationError, Static } from "runtypes";
 import { Order } from "../models/order";
 
 export const orderRouter = Router();
+
+type Order = Static<typeof Order>;
 
 // use this to debug logic before implementing db
 const mock_items = {
@@ -32,13 +34,34 @@ const validateOrderSchema: RequestHandler = (req, res, next) => {
   }
 };
 
-orderRouter.post("/", validateOrderSchema, (req, res, next) => {
-  // validate order data matches model (middleware does it first)
-  const orderObj = Order.check(req.body);
+const validateItemIds: RequestHandler = (req, res, next) => {
+  const orderObj: Order = req.body;
 
-  res.status(200).send("got your order :) ");
-  // fetch item prices from db by id
-  // calc subtotal
-  // add tax to calc total
-  // return subtotal and total
-});
+  // filter to only id not existing in mockData Object (replace with db later)
+  const missingItemIds = orderObj.items
+    .filter((item) => !Object.keys(mock_items).includes(item.id.toString()))
+    .map((item) => item.id);
+  // need to convert id to string since JS converts keys to string type when hashing
+  if (missingItemIds.length === 0) {
+    next();
+  } else {
+    res.status(404).send(`invalid item id: [${missingItemIds}]`);
+    return;
+  }
+};
+
+orderRouter.post(
+  "/",
+  validateOrderSchema,
+  validateItemIds,
+  (req, res, next) => {
+    // validate order data matches model (middleware handles that)
+    const orderObj: Order = req.body;
+
+    // fetch item prices from db by id
+    // calc subtotal
+    // add tax to calc total
+    // return subtotal and total
+    res.status(200).send("got your order :) ");
+  }
+);
