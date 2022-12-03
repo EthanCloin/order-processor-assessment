@@ -2,6 +2,7 @@ import { Router } from "express";
 
 export const orderRouter = Router();
 
+// use this to debug logic before implementing db
 const mock_items = {
   1: 5,
   2: 8,
