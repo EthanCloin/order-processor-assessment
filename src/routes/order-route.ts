@@ -13,6 +13,12 @@ const mock_items = {
   "3": 2,
 };
 
+const mock_state_taxes = {
+  FL: 0.07,
+  GA: 0.1,
+  "*": 0.0,
+};
+
 /**
  * Assert that order request body confirms to schema defined in models/order.Order
  * @param req
@@ -26,9 +32,13 @@ const validateOrderSchema: RequestHandler = (req, res, next) => {
     next();
   } catch (err) {
     if (err instanceof ValidationError) {
-      res
-        .status(400)
-        .send("invalid order request body! " + JSON.stringify(err.details));
+      res.status(400).send({
+        status: "fail",
+        data: {
+          reason: err.code,
+          detail: err.details,
+        },
+      });
       return;
     }
   }
@@ -45,7 +55,13 @@ const validateItemIds: RequestHandler = (req, res, next) => {
   if (missingItemIds.length === 0) {
     next();
   } else {
-    res.status(404).send(`invalid item id: [${missingItemIds}]`);
+    res.status(404).send({
+      status: "fail",
+      data: {
+        reason: "invalid id provided!",
+        detail: missingItemIds,
+      },
+    });
     return;
   }
 };
@@ -65,6 +81,7 @@ orderRouter.post(
     );
 
     // calc subtotal
+    const subtotal = itemPrices.reduce((price1, price2) => price1 + price2);
     // add tax to calc total
     // return subtotal and total
     res.status(200).send(`your item prices are: ${itemPrices}`);
