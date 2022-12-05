@@ -13,11 +13,9 @@ const mock_items = {
   "3": 2,
 };
 
-const mock_state_taxes = {
-  FL: 0.07,
-  GA: 0.1,
-  "*": 0.0,
-};
+const mock_state_taxes = new Map();
+mock_state_taxes.set("FL", 0.07);
+mock_state_taxes.set("GA", 0.1);
 
 /**
  * Assert that order request body confirms to schema defined in models/order.Order
@@ -66,6 +64,11 @@ const validateItemIds: RequestHandler = (req, res, next) => {
   }
 };
 
+const getStateTax = (state: string) => {
+  // this will be updated to hit db, so deserving of own fxn
+  return mock_state_taxes.get(state.toUpperCase()) || 0;
+};
+
 orderRouter.post(
   "/",
   validateOrderSchema,
@@ -82,7 +85,9 @@ orderRouter.post(
 
     // calc subtotal
     const subtotal = itemPrices.reduce((price1, price2) => price1 + price2);
+    const tax = getStateTax(orderObj.address.state);
     // add tax to calc total
+    const total = subtotal * tax + subtotal;
     // return subtotal and total
     res.status(200).send(`your item prices are: ${itemPrices}`);
   }
