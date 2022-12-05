@@ -12,6 +12,7 @@
   "author": "Ethan Cloin <dev.ethancloin@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "currency.js": "^2.0.4",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "morgan": "^1.10.0",
