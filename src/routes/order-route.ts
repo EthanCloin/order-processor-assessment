@@ -1,3 +1,4 @@
+import usd from "currency.js";
 import { Router, RequestHandler } from "express";
 import { ValidationError, Static } from "runtypes";
 import { Order } from "../models/order";
@@ -8,9 +9,9 @@ type Order = Static<typeof Order>;
 
 // use this to debug logic before implementing db
 const mock_items = {
-  "1": 5,
-  "2": 8,
-  "3": 2,
+  "1": 1,
+  "2": 2,
+  "3": 3,
 };
 
 const mock_state_taxes = new Map();
@@ -64,9 +65,31 @@ const validateItemIds: RequestHandler = (req, res, next) => {
   }
 };
 
-const getStateTax = (state: string) => {
+const getStateTax = (state: string): number => {
   // this will be updated to hit db, so deserving of own fxn
   return mock_state_taxes.get(state.toUpperCase()) || 0;
+};
+
+const getPrices = (orderObj: Order): number[] =>
+  orderObj.items.map(
+    (item) =>
+      Object.entries(mock_items).find((x) => x[0] === item.id.toString())![1] *
+      item.quantity
+  );
+
+const calculateTotals = (orderObj: Order, itemPrices: number[]) => {
+  const subtotal = usd(itemPrices.reduce((price1, price2) => price1 + price2));
+  const taxRate = getStateTax(orderObj.address.state);
+  const total = subtotal.add(subtotal.multiply(taxRate));
+
+  return {
+    formatted: {
+      subtotal: subtotal.format(),
+      taxRate: taxRate.toFixed(2),
+      taxDue: usd(taxRate).multiply(subtotal).format(),
+      total: total.format(),
+    },
+  };
 };
 
 orderRouter.post(
@@ -78,17 +101,14 @@ orderRouter.post(
     const orderObj: Order = req.body;
     // validate item ids exist (middleware does that)
     // fetch item prices from db by id
-    const itemPrices = orderObj.items.map(
-      (item) =>
-        Object.entries(mock_items).find((x) => x[0] === item.id.toString())![1]
-    );
+    const itemPrices = getPrices(orderObj);
 
-    // calc subtotal
-    const subtotal = itemPrices.reduce((price1, price2) => price1 + price2);
-    const tax = getStateTax(orderObj.address.state);
-    // add tax to calc total
-    const total = subtotal * tax + subtotal;
-    // return subtotal and total
-    res.status(200).send(`your item prices are: ${itemPrices}`);
+    // calc subtotal and total
+    const totalsData = calculateTotals(orderObj, itemPrices);
+
+    res.status(200).send({
+      status: "success",
+      data: totalsData,
+    });
   }
 );
